@@ -1,6 +1,6 @@
 namespace Arbeidskrav2
 {
-    public enum Enums
+    public enum Category
     {
         Electronics,
         ClothingAndAccessories,
