@@ -14,6 +14,11 @@ namespace Arbeidskrav2
         public List<Listing> Listings { get; } = new();
         public List<Transaction> Purchases { get; } = new();
         public List<Review> ReceivedReviews { get; } = new();
+        
+        public IReadOnlyList<Listing> ActiveListings 
+            => Listings.Where(l => l.Status == ListingStatus.Available).ToList().AsReadOnly();
+        public IReadOnlyList<Listing> SoldListings 
+            => Listings.Where(l => l.Status == ListingStatus.Sold).ToList().AsReadOnly();
     
         public User (string username, string plainPassword)
         {
