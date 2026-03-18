@@ -9,101 +9,72 @@ namespace Arbeidskrav2
         static void Main()
         {
             var market = new SecondHandMarket();
-
             while (true)
             {
                 Console.Clear();
                 PrintHeader(market.Auth);
 
-                string? choice;
-
                 if (!market.Auth.IsLoggedIn)
                 {
+                    // Guest Menu
                     Console.WriteLine("1. Register new account");
-                    Console.WriteLine("2. Log in");
-                    Console.WriteLine("0. Exit");
+                    Console.WriteLine("2. Login");
+                    Console.WriteLine("0. Exit application");
                 }
                 else
                 {
+                    // Logged-in Menu
                     Console.WriteLine("1. View my profile");
                     Console.WriteLine("2. Create new listing");
-                    Console.WriteLine("3. Browse & search items");
-                    Console.WriteLine("4. Logout");
+                    Console.WriteLine("3. Browse & search listings");
+                    Console.WriteLine("4. Buy an item");
                     Console.WriteLine("5. View my listings");
-                    Console.WriteLine("6. Buy an item");
-                    Console.WriteLine("7. Leave a review");
-                    Console.WriteLine("8. View transaction history");
-                    Console.WriteLine("0. Exit");
+                    Console.WriteLine("6. View transaction history");
+                    Console.WriteLine("7. Leave a review for a purchase");
+                    Console.WriteLine("8. Logout");
+                    Console.WriteLine("0. Exit application");
                 }
 
-                Console.Write("\nYour choice: ");
-                choice = Console.ReadLine()?.Trim();
+                Console.Write("\nEnter your choice: ");
+                var choice = Console.ReadLine()?.Trim();
 
                 try
                 {
-                    switch (choice)
+                    if (!market.Auth.IsLoggedIn)
                     {
-                        case "1":
-                            if (!market.Auth.IsLoggedIn)
-                                RegisterFlow(market.Auth);
-                            else
-                                ShowProfile(market.Auth.CurrentUser!);
-                            break;
-
-                        case "2":
-                            if (!market.Auth.IsLoggedIn)
-                                LoginFlow(market.Auth);
-                            else
-                                CreateListingFlow(market);
-                            break;
-
-                        case "3":
-                            if (market.Auth.IsLoggedIn)
-                                BrowseListingsFlow(market);
-                            else
-                                Console.WriteLine("\nPlease log in first.");
-                            break;
-
-                        case "4":
-                            if (market.Auth.IsLoggedIn)
-                                market.Auth.Logout();
-                            break;
-
-                        case "5":
-                            if (market.Auth.IsLoggedIn)
-                                ShowMyListings(market.Auth.CurrentUser!);
-                            else
-                                Console.WriteLine("\nPlease log in first.");
-                            break;
-
-                        case "6":
-                            if (market.Auth.IsLoggedIn)
-                                BuyItemFlow(market);
-                            else
-                                Console.WriteLine("\nPlease log in first.");
-                            break;
-                        
-                        case "7":
-                            if (market.Auth.IsLoggedIn) 
-                                LeaveReviewFlow(market);
-                            else
-                                Console.WriteLine("\nPlease log in first.");
-                            break;
-                        
-                        case "8":
-                            if (market.Auth.IsLoggedIn) 
-                                ShowTransactionHistoryFlow(market);
-                            else
-                                Console.WriteLine("\nPlease log in first.");
-                            break;
-
-                        case "0":
-                            Console.WriteLine("\nThank you for using Second-Hand Market. Goodbye!");
-                            return;
-
-                        default:
-                            Console.WriteLine("\nInvalid choice. Please try again.");
-                            break;
+                        // Guest choices
+                        switch (choice)
+                        {
+                            case "1": RegisterFlow(market.Auth); break;
+                            case "2": LoginFlow(market.Auth); break;
+                            case "0": 
+                                Console.WriteLine("\nThank you for using Second-Hand Market. Goodbye!");
+                                return;
+                            default: 
+                                Console.WriteLine("Invalid choice. Please try again."); 
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        // Logged-in choices
+                        switch (choice)
+                        {
+                            case "1": ShowProfile(market.Auth.CurrentUser!, market); break;
+                            case "2": CreateListingFlow(market); break;
+                            case "3": BrowseListingsFlow(market); break;
+                            case "4": BuyItemFlow(market); break;
+                            case "5": ShowMyListings(market.Auth.CurrentUser!); break;
+                            case "6": ShowTransactionHistoryFlow(market); break;
+                            case "7": LeaveReviewFlow(market); break;
+                            case "8": market.Auth.Logout(); break;
+                            case "0":
+                                Console.WriteLine("\nThank you for using Second-Hand Market. Goodbye!");
+                                return;
+                            default:
+                                Console.WriteLine("Invalid choice. Please try again.");
+                                break;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -111,18 +82,26 @@ namespace Arbeidskrav2
                     Console.WriteLine($"\nError: {ex.Message}");
                 }
 
-                Console.WriteLine("\nPress any key to continue...");
-                Console.ReadKey(true);
+                if (choice != "0")
+                {
+                    Console.WriteLine("\nPress any key to continue...");
+                    Console.ReadKey(true);
+                }
             }
         }
 
         private static void PrintHeader(AuthService auth)
         {
-            Console.WriteLine("=== Second-Hand Market ===");
-            Console.WriteLine(auth.IsLoggedIn
-                ? $"Logged in as: {auth.CurrentUsername}"
-                : "Not logged in");
-            Console.WriteLine(new string('-', 40));
+            Console.WriteLine("╔════════════════════════════════════════════════════════════╗");
+            Console.WriteLine("║                SECOND-HAND MARKET                          ║");
+            Console.WriteLine("╠════════════════════════════════════════════════════════════╣");
+    
+            if (auth.IsLoggedIn)
+                Console.WriteLine($"║  Logged in as: @{auth.CurrentUsername,-35}         ║");
+            else
+                Console.WriteLine("║  Not logged in                                             ║");
+    
+            Console.WriteLine("╚════════════════════════════════════════════════════════════╝");
             Console.WriteLine();
         }
 

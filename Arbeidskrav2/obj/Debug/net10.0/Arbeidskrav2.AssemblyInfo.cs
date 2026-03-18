@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Arbeidskrav2")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+28eae7686d174d5df0af81d08eed055ccc2d90eb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f5c5508e61ce0e96bd804dbfa6250f7568b2df8a")]
 [assembly: System.Reflection.AssemblyProductAttribute("Arbeidskrav2")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Arbeidskrav2")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
