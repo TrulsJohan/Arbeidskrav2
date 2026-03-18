@@ -63,6 +63,23 @@ namespace Arbeidskrav2
         }
 
         public Listing? FindListing(Guid id) => _listings.FirstOrDefault(l => l.Id == id);
+        
+        public Transaction? PurchaseListing(Guid listingId, User buyer)
+        {
+            var listing = _listings.FirstOrDefault(l => l.Id == listingId);
+
+            if (listing == null) throw new InvalidOperationException("Listing not found.");
+            if (listing.Status != ListingStatus.Available) throw new InvalidOperationException("Item is no longer available.");
+            if (listing.IsOwnedBy(buyer)) throw new InvalidOperationException("You cannot buy your own listing.");
+
+            var transaction = new Transaction(listing, buyer);
+            listing.MarkAsSold();
+
+            buyer.Purchases.Add(transaction);
+
+            Console.WriteLine($"\nSuccess! You purchased '{listing.Title}' for {listing.Price:N0} NOK.");
+            return transaction;
+        }
 
         public List<Listing> GetFilteredListings(Category? categoryFilter = null, string? keyword = null)
         {

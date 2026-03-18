@@ -1,4 +1,8 @@
-﻿namespace Arbeidskrav2
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Arbeidskrav2
 {
     class Program
     {
@@ -72,7 +76,7 @@
 
                         case "6":
                             if (market.Auth.IsLoggedIn)
-                                Console.WriteLine("\nPurchase feature – to be implemented next.");
+                                BuyItemFlow(market);
                             else
                                 Console.WriteLine("\nPlease log in first.");
                             break;
@@ -293,6 +297,30 @@
                 {
                     Console.WriteLine("Listing not found or no longer available.");
                 }
+            }
+        }
+        
+        private static void BuyItemFlow(SecondHandMarket market)
+        {
+            var buyer = market.Auth.CurrentUser!;
+    
+            Console.WriteLine("\n=== Purchase an Item ===");
+            Console.Write("Enter the Listing ID you want to buy: ");
+            var idInput = Console.ReadLine()?.Trim();
+
+            if (string.IsNullOrEmpty(idInput) || !Guid.TryParse(idInput, out Guid listingId))
+            {
+                Console.WriteLine("Invalid ID format.");
+                return;
+            }
+
+            try
+            {
+                market.PurchaseListing(listingId, buyer);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"\nPurchase failed: {ex.Message}");
             }
         }
     }
