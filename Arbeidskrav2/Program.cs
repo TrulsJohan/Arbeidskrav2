@@ -32,6 +32,7 @@ namespace Arbeidskrav2
                     Console.WriteLine("5. View my listings");
                     Console.WriteLine("6. Buy an item");
                     Console.WriteLine("7. Leave a review");
+                    Console.WriteLine("8. View transaction history");
                     Console.WriteLine("0. Exit");
                 }
 
@@ -85,6 +86,13 @@ namespace Arbeidskrav2
                         case "7":
                             if (market.Auth.IsLoggedIn) 
                                 LeaveReviewFlow(market);
+                            else
+                                Console.WriteLine("\nPlease log in first.");
+                            break;
+                        
+                        case "8":
+                            if (market.Auth.IsLoggedIn) 
+                                ShowTransactionHistoryFlow(market);
                             else
                                 Console.WriteLine("\nPlease log in first.");
                             break;
@@ -319,6 +327,52 @@ namespace Arbeidskrav2
                 {
                     Console.WriteLine("Listing not found or no longer available.");
                 }
+            }
+        }
+        
+        private static void ShowTransactionHistoryFlow(SecondHandMarket market)
+        {
+            var user = market.Auth.CurrentUser!;
+    
+            Console.WriteLine("\n=== Transaction History ===");
+            Console.WriteLine($"Logged in as: @{user.Username}\n");
+
+            Console.WriteLine("─ Items You Have Bought ─");
+            if (user.Purchases.Any())
+            {
+                foreach (var t in user.Purchases.OrderByDescending(t => t.PurchasedAt))
+                {
+                    Console.WriteLine($"• {t.Listing.Title}");
+                    Console.WriteLine($"  Price:     {t.Price:N0} NOK");
+                    Console.WriteLine($"  Seller:    @{t.Seller.Username}");
+                    Console.WriteLine($"  Date:      {t.PurchasedAt:yyyy-MM-dd HH:mm}");
+                    Console.WriteLine($"  Listing ID:{t.Listing.Id.ToString()[..8]}...");
+                    Console.WriteLine(new string('-', 50));
+                }
+            }
+            else
+            {
+                Console.WriteLine("  You haven't bought anything yet.");
+            }
+            
+            Console.WriteLine("\n─ Items You Have Sold ─");
+            var soldTransactions = market.GetSoldTransactions(user);
+
+            if (soldTransactions.Any())
+            {
+                foreach (var t in soldTransactions.OrderByDescending(t => t.PurchasedAt))
+                {
+                    Console.WriteLine($"• {t.Listing.Title}");
+                    Console.WriteLine($"  Price:     {t.Price:N0} NOK");
+                    Console.WriteLine($"  Buyer:     @{t.Buyer.Username}");
+                    Console.WriteLine($"  Date:      {t.PurchasedAt:yyyy-MM-dd HH:mm}");
+                    Console.WriteLine($"  Listing ID:{t.Listing.Id.ToString()[..8]}...");
+                    Console.WriteLine(new string('-', 50));
+                }
+            }
+            else
+            {
+                Console.WriteLine("  You haven't sold anything yet.");
             }
         }
         

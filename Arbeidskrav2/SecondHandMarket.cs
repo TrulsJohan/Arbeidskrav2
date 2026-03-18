@@ -128,6 +128,21 @@ namespace Arbeidskrav2
             return Math.Round(user.ReceivedReviews.Average(r => r.Rating), 2);
         }
         
+        public List<Transaction> GetSoldTransactions(User seller)
+        {
+            return _listings
+                .Where(l => l.Status == ListingStatus.Sold && l.Seller == seller)
+                .Select(l => 
+                {
+                    var buyerTransaction = _users
+                        .SelectMany(u => u.Purchases)
+                        .FirstOrDefault(t => t.Listing.Id == l.Id);
+                    return buyerTransaction;
+                })
+                .Where(t => t != null)
+                .ToList()!;
+        }
+        
         public void PrintListings(List<Listing> listings)
         {
             if (!listings.Any())
