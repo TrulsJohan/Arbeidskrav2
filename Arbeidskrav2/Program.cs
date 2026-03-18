@@ -23,7 +23,7 @@
                 {
                     Console.WriteLine("1. View my profile");
                     Console.WriteLine("2. Create new listing");
-                    Console.WriteLine("3. Browse available items      [coming soon]");
+                    Console.WriteLine("3. Browse available items");
                     Console.WriteLine("4. Log out");
                     Console.WriteLine("5. View my listings");
                     Console.WriteLine("6. Buy / purchase an item       [coming soon]");
@@ -53,7 +53,7 @@
 
                         case "3":
                             if (market.Auth.IsLoggedIn)
-                                Console.WriteLine("\nBrowse items feature – to be implemented next.");
+                                BrowseListingsFlow(market);
                             else
                                 Console.WriteLine("\nPlease log in first.");
                             break;
@@ -235,6 +235,64 @@
             else
             {
                 Console.WriteLine("  No sold items yet.");
+            }
+        }
+
+        private static void BrowseListingsFlow(SecondHandMarket market)
+        {
+            Console.WriteLine("\n=== Browse & Search Listings ===\n");
+            Category? selectedCategory = null;
+            string? keyword = null;
+            
+            Console.Write("Filter by category? (y/n): ");
+            if (Console.ReadLine()?.Trim().ToLower() == "y")
+            {
+                Console.WriteLine("\nAvailable categories:");
+                var categories = Enum.GetValues(typeof(Category)).Cast<Category>().ToList();
+                for (int i = 0; i < categories.Count; i++)
+                {
+                    Console.WriteLine($"  {i + 1}. {categories[i]}");
+                }
+                Console.Write("\nChoose category number (or press Enter to skip): ");
+                var input = Console.ReadLine()?.Trim();
+                if (!string.IsNullOrEmpty(input) && 
+                    int.TryParse(input, out int catNum) && 
+                    catNum >= 1 && catNum <= categories.Count)
+                {
+                    selectedCategory = categories[catNum - 1];
+                    Console.WriteLine($"Filtering by: {selectedCategory}");
+                }
+            }
+            Console.Write("\nSearch by keyword (title or description, or press Enter to skip): ");
+            keyword = Console.ReadLine()?.Trim();
+            var results = market.GetFilteredListings(selectedCategory, keyword);
+            
+            if (selectedCategory.HasValue)
+                Console.WriteLine($"\nResults for category: {selectedCategory}");
+            if (!string.IsNullOrWhiteSpace(keyword))
+                Console.WriteLine($"Results for keyword: \"{keyword}\"");
+            
+            market.PrintListings(results);
+            
+            Console.Write("\nEnter a listing ID to see more details (or press Enter to return): ");
+            var idInput = Console.ReadLine()?.Trim();
+
+            if (!string.IsNullOrEmpty(idInput) && Guid.TryParse(idInput, out Guid listingId))
+            {
+                var listing = market.FindListing(listingId);
+                if (listing != null && listing.Status == ListingStatus.Available)
+                {
+                    Console.WriteLine("\n" + new string('=', 60));
+                    Console.WriteLine("DETAILED VIEW");
+                    Console.WriteLine(new string('=', 60));
+                    Console.WriteLine(listing);
+                    Console.WriteLine($"Seller: @{listing.Seller.Username}");
+                    Console.WriteLine($"Description: {listing.Description}");
+                }
+                else
+                {
+                    Console.WriteLine("Listing not found or no longer available.");
+                }
             }
         }
     }

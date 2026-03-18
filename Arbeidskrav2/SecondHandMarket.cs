@@ -63,5 +63,51 @@ namespace Arbeidskrav2
         }
 
         public Listing? FindListing(Guid id) => _listings.FirstOrDefault(l => l.Id == id);
+
+        public List<Listing> GetFilteredListings(Category? categoryFilter = null, string? keyword = null)
+        {
+            var query = _listings.Where(l => l.Status == ListingStatus.Available);
+
+            if (categoryFilter.HasValue)
+            {
+                query = query.Where(l => l.Category == categoryFilter.Value);
+            }
+
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                keyword = keyword.Trim().ToLower();
+                query = query.Where(l =>
+                    l.Title.ToLower().Contains(keyword) ||
+                    l.Description.ToLower().Contains(keyword));
+            }
+            
+            return query
+                .OrderByDescending(l => l.CreatedAt)
+                .ToList();
+        }
+        
+        public void PrintListings(List<Listing> listings)
+        {
+            if (!listings.Any())
+            {
+                Console.WriteLine("No listings found.");
+                return;
+            }
+
+            Console.WriteLine($"Found {listings.Count} listing(s):\n");
+
+            foreach (var listing in listings)
+            {
+                Console.WriteLine($"ID: {listing.Id.ToString()[..8]}...");
+                Console.WriteLine($"Title:       {listing.Title}");
+                Console.WriteLine($"Price:       {listing.Price:N0} NOK");
+                Console.WriteLine($"Category:    {listing.Category}");
+                Console.WriteLine($"Condition:   {listing.Condition}");
+                Console.WriteLine($"Seller:      @{listing.Seller.Username}");
+                Console.WriteLine($"Created:     {listing.CreatedAt:yyyy-MM-dd HH:mm}");
+                Console.WriteLine($"Description: {listing.Description}");
+                Console.WriteLine(new string('-', 60));
+            }
+        }
     }
 }
