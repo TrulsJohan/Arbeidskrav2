@@ -27,10 +27,11 @@ namespace Arbeidskrav2
                 {
                     Console.WriteLine("1. View my profile");
                     Console.WriteLine("2. Create new listing");
-                    Console.WriteLine("3. Browse available items");
-                    Console.WriteLine("4. Log out");
+                    Console.WriteLine("3. Browse & search items");
+                    Console.WriteLine("4. Logout");
                     Console.WriteLine("5. View my listings");
-                    Console.WriteLine("6. Buy / purchase an item       [coming soon]");
+                    Console.WriteLine("6. Buy an item");
+                    Console.WriteLine("7. Leave a review");
                     Console.WriteLine("0. Exit");
                 }
 
@@ -77,6 +78,13 @@ namespace Arbeidskrav2
                         case "6":
                             if (market.Auth.IsLoggedIn)
                                 BuyItemFlow(market);
+                            else
+                                Console.WriteLine("\nPlease log in first.");
+                            break;
+                        
+                        case "7":
+                            if (market.Auth.IsLoggedIn) 
+                                LeaveReviewFlow(market);
                             else
                                 Console.WriteLine("\nPlease log in first.");
                             break;
@@ -140,15 +148,29 @@ namespace Arbeidskrav2
                 Console.WriteLine("\nLogin failed – incorrect username or password.");
         }
 
-        private static void ShowProfile(User user)
+        private static void ShowProfile(User user, SecondHandMarket market)
         {
-            Console.WriteLine($"\n=== Profile: {user.Username} ===");
-            Console.WriteLine($"Member since: {user.RegisteredAt:yyyy-MM-dd}");
-            Console.WriteLine($"Active listings: {user.ActiveListings.Count}");
-            Console.WriteLine($"Sold items:      {user.SoldListings.Count}");
-            Console.WriteLine($"Purchases:       {user.Purchases.Count}");
+            var avgRating = market.GetAverageRating(user);
+
+            Console.WriteLine($"\n=== Profile: @{user.Username} ===");
+            Console.WriteLine($"Member since:     {user.RegisteredAt:yyyy-MM-dd}");
+            Console.WriteLine($"Active listings:  {user.ActiveListings.Count}");
+            Console.WriteLine($"Purchases:        {user.Purchases.Count}");
             Console.WriteLine($"Reviews received: {user.ReceivedReviews.Count}");
-            Console.WriteLine();
+
+            if (avgRating.HasValue)
+                Console.WriteLine($"Average rating:   {avgRating.Value}/6 ★");
+            else
+                Console.WriteLine("Average rating:   No reviews yet");
+
+            if (user.ReceivedReviews.Any())
+            {
+                Console.WriteLine("\nRecent reviews:");
+                foreach (var review in user.ReceivedReviews.OrderByDescending(r => r.ReviewedAt).Take(3))
+                {
+                    Console.WriteLine($"  • {review.Rating}/6 from @{review.Reviewer.Username}: {review.Comment ?? "No comment"}");
+                }
+            }
         }
 
         private static void CreateListingFlow(SecondHandMarket market)
@@ -297,6 +319,54 @@ namespace Arbeidskrav2
                 {
                     Console.WriteLine("Listing not found or no longer available.");
                 }
+            }
+        }
+        
+        private static void LeaveReviewFlow(SecondHandMarket market)
+        {
+            var buyer = market.Auth.CurrentUser!;
+
+            Console.WriteLine("\n=== Leave a Review ===");
+
+            if (!buyer.Purchases.Any())
+            {
+                Console.WriteLine("You have no purchases yet.");
+                return;
+            }
+
+            Console.WriteLine("Your recent purchases:");
+            for (int i = 0; i < buyer.Purchases.Count; i++)
+            {
+                var t = buyer.Purchases[i];
+                Console.WriteLine($"{i + 1}. {t.Listing.Title} - {t.Price:N0} NOK (ID: {t.Id.ToString()[..8]}...)");
+            }
+
+            Console.Write("\nEnter the number of the purchase you want to review: ");
+            if (!int.TryParse(Console.ReadLine(), out int choice) || choice < 1 || choice > buyer.Purchases.Count)
+            {
+                Console.WriteLine("Invalid selection.");
+                return;
+            }
+
+            var selectedTransaction = buyer.Purchases[choice - 1];
+
+            Console.Write("\nRating (1-6): ");
+            if (!int.TryParse(Console.ReadLine(), out int rating) || rating < 1 || rating > 6)
+            {
+                Console.WriteLine("Rating must be between 1 and 6.");
+                return;
+            }
+
+            Console.Write("Comment (optional, press Enter to skip): ");
+            var comment = Console.ReadLine()?.Trim();
+
+            try
+            {
+                market.LeaveReview(buyer, selectedTransaction.Id, rating, comment);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Review failed: {ex.Message}");
             }
         }
         

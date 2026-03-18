@@ -103,6 +103,31 @@ namespace Arbeidskrav2
                 .ToList();
         }
         
+        public Review? LeaveReview(User reviewer, Guid transactionId, int rating, string? comment)
+        {
+            var transaction = reviewer.Purchases.FirstOrDefault(t => t.Id == transactionId);
+
+            if (transaction == null)
+                throw new InvalidOperationException("Transaction not found in your purchase history.");
+
+            if (transaction.Listing.Seller.ReceivedReviews.Any(r => r.Transaction.Id == transactionId))
+                throw new InvalidOperationException("You have already reviewed this purchase.");
+
+            var review = new Review(reviewer, transaction.Seller, transaction, rating, comment);
+
+            transaction.Seller.ReceivedReviews.Add(review);
+            Console.WriteLine($"\nThank you! You gave {rating}/6 to @{transaction.Seller.Username}.");
+            return review;
+        }
+        
+        public double? GetAverageRating(User user)
+        {
+            if (!user.ReceivedReviews.Any())
+                return null;
+
+            return Math.Round(user.ReceivedReviews.Average(r => r.Rating), 2);
+        }
+        
         public void PrintListings(List<Listing> listings)
         {
             if (!listings.Any())
