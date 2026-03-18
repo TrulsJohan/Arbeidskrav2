@@ -379,9 +379,7 @@ namespace Arbeidskrav2
         private static void LeaveReviewFlow(SecondHandMarket market)
         {
             var buyer = market.Auth.CurrentUser!;
-
             Console.WriteLine("\n=== Leave a Review ===");
-
             if (!buyer.Purchases.Any())
             {
                 Console.WriteLine("You have no purchases yet.");
