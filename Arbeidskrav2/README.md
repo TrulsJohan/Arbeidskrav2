@@ -18,6 +18,9 @@ AI usage:
 - Can you help me make the console look nice and easy to read
 - Can you make a simple readme.md file template
 
+Link to github repo & commit history:
+https://github.com/TrulsJohan/Arbeidskrav2
+
 ## How to Build and Run
 
 **Prerequisites:**
