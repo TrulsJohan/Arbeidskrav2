@@ -216,32 +216,12 @@ namespace Arbeidskrav2
         {
             var user = market.Auth.CurrentUser!;
             Console.WriteLine($"\n=== Your Listings ({user.Listings.Count} total) ===");
-
-            if (!user.Listings.Any())
-            {
-                Console.WriteLine("You have no listings yet.");
-                return;
-            }
-
-            Console.WriteLine("Active:");
-            var active = user.ActiveListings;
-            if (active.Any())
-            {
-                foreach (var listing in active.OrderByDescending(l => l.CreatedAt))
-                {
-                    Console.WriteLine($"  • {listing.ShortInfo()}  ID: {listing.Id.ToString()[..8]}...");
-                }
-            }
-            else
-            {
-                Console.WriteLine("  No active listings.");
-            }
-
+            
             Console.WriteLine("\nSold:");
             var sold = user.SoldListings;
             if (sold.Any())
             {
-                foreach (var listing in sold.OrderByDescending(l => l.SoldAt))
+                foreach (var listing in sold.OrderByDescending(l => l.SoldAt!.Value))
                 {
                     Console.WriteLine($"  • {listing.ShortInfo()}  Sold on {listing.SoldAt:yyyy-MM-dd}");
                 }
@@ -250,12 +230,76 @@ namespace Arbeidskrav2
             {
                 Console.WriteLine("  No sold items yet.");
             }
-            
-            Console.WriteLine("\nTo delete an active listing, enter its ID (or press Enter to skip): ");
-            var delInput = Console.ReadLine()?.Trim();
-            if (!string.IsNullOrEmpty(delInput) && Guid.TryParse(delInput, out Guid delId))
+
+            Console.WriteLine("\nActive listings (you can update or delete these):");
+            var active = user.ActiveListings;
+            if (!active.Any())
             {
-                market.DeleteListing(delId);
+                Console.WriteLine("  You have no active listings.");
+                return;
+            }
+
+            for (int i = 0; i < active.Count; i++)
+            {
+                var l = active[i];
+                Console.WriteLine($"  {i + 1}. {l.ShortInfo()}");
+            }
+
+            Console.Write("\nSelect a listing to manage (0 to go back): ");
+            if (!int.TryParse(Console.ReadLine(), out int choice) || choice < 1 || choice > active.Count)
+                return;
+
+            var selected = active[choice - 1];
+            
+            Console.WriteLine("\n" + new string('=', 70));
+            Console.WriteLine($"=== {selected.Title} ===");
+            Console.WriteLine(new string('=', 70));
+            Console.WriteLine($"Category:    {selected.CategoryDisplay}");
+            Console.WriteLine($"Condition:   {selected.ConditionDisplay}");
+            Console.WriteLine($"Price:       {selected.Price:N0} NOK");
+            Console.WriteLine($"Created:     {selected.CreatedAt:yyyy-MM-dd}");
+            Console.WriteLine($"Description: {selected.Description}");
+            Console.WriteLine(new string('=', 70));
+
+            Console.WriteLine("\n1. Update details");
+            Console.WriteLine("2. Delete listing");
+            Console.WriteLine("3. Go back");
+            Console.Write("Select an option: ");
+            var option = Console.ReadLine()?.Trim();
+
+            if (option == "1")
+            {
+                Console.Write($"New title (current: {selected.Title} - press Enter to keep): ");
+                var newTitle = Console.ReadLine()?.Trim();
+                if (string.IsNullOrEmpty(newTitle)) newTitle = null;
+
+                Console.Write($"New description (current: {selected.Description} - press Enter to keep): ");
+                var newDesc = Console.ReadLine()?.Trim();
+                if (string.IsNullOrEmpty(newDesc)) newDesc = null;
+
+                Console.Write($"New price (current: {selected.Price:N0} - press Enter to keep): ");
+                var priceInput = Console.ReadLine()?.Trim();
+                decimal? newPrice = null;
+                if (!string.IsNullOrEmpty(priceInput) && decimal.TryParse(priceInput, out decimal p) && p > 0)
+                    newPrice = p;
+
+                try
+                {
+                    selected.UpdateDetails(newTitle, newDesc, newPrice);
+                    Console.WriteLine("Listing updated successfully!");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Update failed: {ex.Message}");
+                }
+            }
+            else if (option == "2")
+            {
+                Console.Write("Are you sure you want to delete this listing? (Y/N): ");
+                if (Console.ReadLine()?.Trim().ToUpper() == "Y")
+                {
+                    market.DeleteListing(selected.Id);
+                }
             }
         }
 
@@ -287,7 +331,7 @@ namespace Arbeidskrav2
                 Console.WriteLine("No listings found.");
                 return;
             }
-            
+
             market.PrintNumberedListings(results);
 
             Console.Write("\nSelect a listing to view (0 to go back): ");
@@ -295,7 +339,7 @@ namespace Arbeidskrav2
                 return;
 
             var selected = results[choice - 1];
-            
+
             Console.WriteLine("\n" + new string('=', 70));
             Console.WriteLine($"=== {selected.Title} ===");
             Console.WriteLine(new string('=', 70));
