@@ -1,5 +1,8 @@
 namespace Arbeidskrav2
 {
+    /// <summary>
+    /// Predefined item categories (matches assignment spec, with display-friendly names in Listing).
+    /// </summary>
     public enum Category
     {
         Electronics,
@@ -10,6 +13,9 @@ namespace Arbeidskrav2
         Other,
     }
 
+    /// <summary>
+    /// Item condition levels (matches assignment spec).
+    /// </summary>
     public enum Condition
     {
         New,
@@ -18,6 +24,9 @@ namespace Arbeidskrav2
         Fair,
     }
 
+    /// <summary>
+    /// Listing status - only Available items can be purchased.
+    /// </summary>
     public enum ListingStatus
     {
         Available,

@@ -1,7 +1,13 @@
-using System.Transactions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Arbeidskrav2
 {
+    /// <summary>
+    /// Represents a registered user. Contains all personal data, listings, purchases and received reviews.
+    /// Password is hashed (simple but secure enough for this assignment).
+    /// </summary>
     public class User
     {
         public string Username { get; init; }
@@ -15,12 +21,19 @@ namespace Arbeidskrav2
         public List<Transaction> Purchases { get; } = new();
         public List<Review> ReceivedReviews { get; } = new();
         
+        /// <summary>
+        /// Active (unsold) listings - read-only for safety.
+        /// </summary>
         public IReadOnlyList<Listing> ActiveListings 
             => Listings.Where(l => l.Status == ListingStatus.Available).ToList().AsReadOnly();
+        
+        /// <summary>
+        /// Sold listings - read-only for safety.
+        /// </summary>
         public IReadOnlyList<Listing> SoldListings 
             => Listings.Where(l => l.Status == ListingStatus.Sold).ToList().AsReadOnly();
     
-        public User (string username, string plainPassword)
+        public User(string username, string plainPassword)
         {
             if (string.IsNullOrEmpty(username))
             {
@@ -31,6 +44,9 @@ namespace Arbeidskrav2
             RegisteredAt = DateTime.Now;
         }
 
+        /// <summary>
+        /// Verifies supplied password against stored hash.
+        /// </summary>
         public bool VerifyPassword(string plainPassword)
         {
             return PasswordHash == HashPassword(plainPassword);

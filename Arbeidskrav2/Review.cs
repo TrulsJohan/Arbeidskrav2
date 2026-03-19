@@ -1,5 +1,11 @@
+using System;
+
 namespace Arbeidskrav2
 {
+    /// <summary>
+    /// Represents a review left by a buyer for a seller after a transaction.
+    /// Contains terningkast (1-6) and optional comment. One review per transaction.
+    /// </summary>
     public class Review
     {
         public Guid Id { get; init; } = Guid.NewGuid();
@@ -10,6 +16,9 @@ namespace Arbeidskrav2
         public string? Comment { get; init; }
         public DateTime ReviewedAt { get; init; } = DateTime.Now;
 
+        /// <summary>
+        /// Creates a new review. Validates rating 1-6.
+        /// </summary>
         public Review(User reviewer, User seller, Transaction transaction, int rating, string? comment)
         {
             if (rating < 1 || rating > 6)

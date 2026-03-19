@@ -27,7 +27,7 @@ namespace Arbeidskrav2
                     Console.WriteLine("1. View my profile");
                     Console.WriteLine("2. Create new listing");
                     Console.WriteLine("3. Browse & search listings");
-                    Console.WriteLine("4. Buy an item");
+                    Console.WriteLine("4. Buy an item (by ID - backup)");
                     Console.WriteLine("5. View my listings");
                     Console.WriteLine("6. View transaction history");
                     Console.WriteLine("7. Leave a review for a purchase");
@@ -64,7 +64,7 @@ namespace Arbeidskrav2
                             case "2": CreateListingFlow(market); break;
                             case "3": BrowseListingsFlow(market); break;
                             case "4": BuyItemFlow(market); break;
-                            case "5": ShowMyListings(market.Auth.CurrentUser!); break;
+                            case "5": ShowMyListings(market); break;
                             case "6": ShowTransactionHistoryFlow(market); break;
                             case "7": LeaveReviewFlow(market); break;
                             case "8": market.Auth.Logout(); break;
@@ -212,8 +212,9 @@ namespace Arbeidskrav2
             }
         }
 
-        private static void ShowMyListings(User user)
+        private static void ShowMyListings(SecondHandMarket market)
         {
+            var user = market.Auth.CurrentUser!;
             Console.WriteLine($"\n=== Your Listings ({user.Listings.Count} total) ===");
 
             if (!user.Listings.Any())
@@ -249,66 +250,94 @@ namespace Arbeidskrav2
             {
                 Console.WriteLine("  No sold items yet.");
             }
+            
+            Console.WriteLine("\nTo delete an active listing, enter its ID (or press Enter to skip): ");
+            var delInput = Console.ReadLine()?.Trim();
+            if (!string.IsNullOrEmpty(delInput) && Guid.TryParse(delInput, out Guid delId))
+            {
+                market.DeleteListing(delId);
+            }
         }
 
         private static void BrowseListingsFlow(SecondHandMarket market)
         {
             Console.WriteLine("\n=== Browse & Search Listings ===\n");
+
             Category? selectedCategory = null;
             string? keyword = null;
-            
+
             Console.Write("Filter by category? (y/n): ");
             if (Console.ReadLine()?.Trim().ToLower() == "y")
             {
-                Console.WriteLine("\nAvailable categories:");
-                var categories = Enum.GetValues(typeof(Category)).Cast<Category>().ToList();
-                for (int i = 0; i < categories.Count; i++)
-                {
-                    Console.WriteLine($"  {i + 1}. {categories[i]}");
-                }
-                Console.Write("\nChoose category number (or press Enter to skip): ");
-                var input = Console.ReadLine()?.Trim();
-                if (!string.IsNullOrEmpty(input) && 
-                    int.TryParse(input, out int catNum) && 
-                    catNum >= 1 && catNum <= categories.Count)
-                {
-                    selectedCategory = categories[catNum - 1];
-                    Console.WriteLine($"Filtering by: {selectedCategory}");
-                }
+                var cats = Enum.GetValues(typeof(Category)).Cast<Category>().ToList();
+                for (int i = 0; i < cats.Count; i++)
+                    Console.WriteLine($"  {i + 1}. {cats[i]}");
+                Console.Write("Choose category number (or Enter to skip): ");
+                if (int.TryParse(Console.ReadLine(), out int c) && c >= 1 && c <= cats.Count)
+                    selectedCategory = cats[c - 1];
             }
-            Console.Write("\nSearch by keyword (title or description, or press Enter to skip): ");
-            keyword = Console.ReadLine()?.Trim();
-            var results = market.GetFilteredListings(selectedCategory, keyword);
-            
-            if (selectedCategory.HasValue)
-                Console.WriteLine($"\nResults for category: {selectedCategory}");
-            if (!string.IsNullOrWhiteSpace(keyword))
-                Console.WriteLine($"Results for keyword: \"{keyword}\"");
-            
-            market.PrintListings(results);
-            
-            Console.Write("\nEnter a listing ID to see more details (or press Enter to return): ");
-            var idInput = Console.ReadLine()?.Trim();
 
-            if (!string.IsNullOrEmpty(idInput) && Guid.TryParse(idInput, out Guid listingId))
+            Console.Write("Search by keyword (or press Enter to skip): ");
+            keyword = Console.ReadLine()?.Trim();
+
+            var results = market.GetFilteredListings(selectedCategory, keyword);
+
+            if (!results.Any())
             {
-                var listing = market.FindListing(listingId);
-                if (listing != null && listing.Status == ListingStatus.Available)
+                Console.WriteLine("No listings found.");
+                return;
+            }
+            
+            market.PrintNumberedListings(results);
+
+            Console.Write("\nSelect a listing to view (0 to go back): ");
+            if (!int.TryParse(Console.ReadLine(), out int choice) || choice < 1 || choice > results.Count)
+                return;
+
+            var selected = results[choice - 1];
+            
+            Console.WriteLine("\n" + new string('=', 70));
+            Console.WriteLine($"=== {selected.Title} ===");
+            Console.WriteLine(new string('=', 70));
+            Console.WriteLine($"Seller:      @{selected.Seller.Username}");
+            Console.WriteLine($"Category:    {selected.CategoryDisplay}");
+            Console.WriteLine($"Condition:   {selected.ConditionDisplay}");
+            Console.WriteLine($"Price:       {selected.Price:N0} NOK");
+            Console.WriteLine($"Created:     {selected.CreatedAt:yyyy-MM-dd}");
+            Console.WriteLine($"Description: {selected.Description}");
+            Console.WriteLine(new string('=', 70));
+
+            Console.WriteLine("\n1. Buy this item");
+            Console.WriteLine("2. Go back");
+            Console.Write("Select an option: ");
+
+            if (Console.ReadLine()?.Trim() == "1")
+            {
+                try
                 {
-                    Console.WriteLine("\n" + new string('=', 60));
-                    Console.WriteLine("DETAILED VIEW");
-                    Console.WriteLine(new string('=', 60));
-                    Console.WriteLine(listing);
-                    Console.WriteLine($"Seller: @{listing.Seller.Username}");
-                    Console.WriteLine($"Description: {listing.Description}");
+                    var transaction = market.PurchaseListing(selected.Id, market.Auth.CurrentUser!);
+                    if (transaction != null)
+                    {
+                        Console.Write("\nWould you like to leave a review for the seller? (Y/N): ");
+                        if (Console.ReadLine()?.Trim().ToUpper() == "Y")
+                        {
+                            Console.Write("Rating (1-6): ");
+                            if (int.TryParse(Console.ReadLine(), out int r) && r >= 1 && r <= 6)
+                            {
+                                Console.Write("Comment (optional, press Enter to skip): ");
+                                var comment = Console.ReadLine()?.Trim();
+                                market.LeaveReview(market.Auth.CurrentUser!, transaction.Id, r, comment);
+                            }
+                        }
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Console.WriteLine("Listing not found or no longer available.");
+                    Console.WriteLine($"Purchase failed: {ex.Message}");
                 }
             }
         }
-        
+
         private static void ShowTransactionHistoryFlow(SecondHandMarket market)
         {
             var user = market.Auth.CurrentUser!;
@@ -403,25 +432,18 @@ namespace Arbeidskrav2
         
         private static void BuyItemFlow(SecondHandMarket market)
         {
-            var buyer = market.Auth.CurrentUser!;
-    
-            Console.WriteLine("\n=== Purchase an Item ===");
-            Console.Write("Enter the Listing ID you want to buy: ");
-            var idInput = Console.ReadLine()?.Trim();
-
-            if (string.IsNullOrEmpty(idInput) || !Guid.TryParse(idInput, out Guid listingId))
+            Console.WriteLine("\n=== Buy by ID (backup option) ===");
+            Console.Write("Enter full Listing ID: ");
+            if (Guid.TryParse(Console.ReadLine()?.Trim(), out Guid id))
             {
-                Console.WriteLine("Invalid ID format.");
-                return;
-            }
-
-            try
-            {
-                market.PurchaseListing(listingId, buyer);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"\nPurchase failed: {ex.Message}");
+                try
+                {
+                    market.PurchaseListing(id, market.Auth.CurrentUser!);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Purchase failed: {ex.Message}");
+                }
             }
         }
     }

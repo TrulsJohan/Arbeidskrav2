@@ -3,3 +3,13 @@
 /Users/truls/Documents/repo/Arbeidskrav2/Arbeidskrav2/obj/Debug/net10.0/Arbeidskrav2.AssemblyInfo.cs
 /Users/truls/Documents/repo/Arbeidskrav2/Arbeidskrav2/obj/Debug/net10.0/Arbeidskrav2.csproj.CoreCompileInputs.cache
 /Users/truls/Documents/repo/Arbeidskrav2/Arbeidskrav2/obj/Debug/net10.0/Arbeidskrav2.sourcelink.json
+/Users/truls/Documents/repo/Arbeidskrav2/Arbeidskrav2/bin/Debug/net10.0/Arbeidskrav2
+/Users/truls/Documents/repo/Arbeidskrav2/Arbeidskrav2/bin/Debug/net10.0/Arbeidskrav2.deps.json
+/Users/truls/Documents/repo/Arbeidskrav2/Arbeidskrav2/bin/Debug/net10.0/Arbeidskrav2.runtimeconfig.json
+/Users/truls/Documents/repo/Arbeidskrav2/Arbeidskrav2/bin/Debug/net10.0/Arbeidskrav2.dll
+/Users/truls/Documents/repo/Arbeidskrav2/Arbeidskrav2/bin/Debug/net10.0/Arbeidskrav2.pdb
+/Users/truls/Documents/repo/Arbeidskrav2/Arbeidskrav2/obj/Debug/net10.0/Arbeidskrav2.dll
+/Users/truls/Documents/repo/Arbeidskrav2/Arbeidskrav2/obj/Debug/net10.0/refint/Arbeidskrav2.dll
+/Users/truls/Documents/repo/Arbeidskrav2/Arbeidskrav2/obj/Debug/net10.0/Arbeidskrav2.pdb
+/Users/truls/Documents/repo/Arbeidskrav2/Arbeidskrav2/obj/Debug/net10.0/Arbeidskrav2.genruntimeconfig.cache
+/Users/truls/Documents/repo/Arbeidskrav2/Arbeidskrav2/obj/Debug/net10.0/ref/Arbeidskrav2.dll

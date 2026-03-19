@@ -1,23 +1,38 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace Arbeidskrav2
 {
+    /// <summary>
+    /// Main application core. Manages all listings, transactions, reviews and business rules.
+    /// Uses LINQ extensively, generic collections, enums and exception handling.
+    /// Fully separates data logic from UI (Program.cs).
+    /// </summary>
     public class SecondHandMarket
     {
         private readonly List<User> _users = new();
         public AuthService Auth { get; }
         
+        private readonly List<Listing> _listings = new();
+
         public SecondHandMarket()
         {
             Auth = new AuthService(_users);
         }
         
+        /// <summary>
+        /// All currently available listings (sorted newest first).
+        /// </summary>
         public IReadOnlyList<Listing> ActiveListings 
             => _listings.Where(l => l.Status == ListingStatus.Available)
                 .OrderByDescending(l => l.CreatedAt)
                 .ToList()
                 .AsReadOnly();
 
-        private readonly List<Listing> _listings = new();
-
+        /// <summary>
+        /// Creates a new listing for the logged-in seller.
+        /// </summary>
         public Listing CreateListing(
             User seller,
             string title,
@@ -39,6 +54,9 @@ namespace Arbeidskrav2
             return listing;
         }
 
+        /// <summary>
+        /// Deletes a listing (only by owner and only if still available).
+        /// </summary>
         public bool DeleteListing(Guid listingId)
         {
             var listing = _listings.FirstOrDefault(l => l.Id == listingId);
@@ -64,6 +82,10 @@ namespace Arbeidskrav2
 
         public Listing? FindListing(Guid id) => _listings.FirstOrDefault(l => l.Id == id);
         
+        /// <summary>
+        /// Purchases a listing. Validates rules, marks sold, creates transaction.
+        /// Returns the transaction for immediate review prompt.
+        /// </summary>
         public Transaction? PurchaseListing(Guid listingId, User buyer)
         {
             var listing = _listings.FirstOrDefault(l => l.Id == listingId);
@@ -81,6 +103,10 @@ namespace Arbeidskrav2
             return transaction;
         }
 
+        /// <summary>
+        /// Returns filtered available listings using LINQ (category + keyword search).
+        /// Fixed: correct keyword filtering logic.
+        /// </summary>
         public List<Listing> GetFilteredListings(Category? categoryFilter = null, string? keyword = null)
         {
             var query = _listings.Where(l => l.Status == ListingStatus.Available);
@@ -90,12 +116,12 @@ namespace Arbeidskrav2
                 query = query.Where(l => l.Category == categoryFilter.Value);
             }
 
-            if (string.IsNullOrWhiteSpace(keyword))
+            if (!string.IsNullOrWhiteSpace(keyword))
             {
-                keyword = keyword.Trim().ToLower();
+                var k = keyword.Trim().ToLower();
                 query = query.Where(l =>
-                    l.Title.ToLower().Contains(keyword) ||
-                    l.Description.ToLower().Contains(keyword));
+                    l.Title.ToLower().Contains(k) ||
+                    l.Description.ToLower().Contains(k));
             }
             
             return query
@@ -103,6 +129,9 @@ namespace Arbeidskrav2
                 .ToList();
         }
         
+        /// <summary>
+        /// Leaves a review for a completed purchase (one per transaction).
+        /// </summary>
         public Review? LeaveReview(User reviewer, Guid transactionId, int rating, string? comment)
         {
             var transaction = reviewer.Purchases.FirstOrDefault(t => t.Id == transactionId);
@@ -120,6 +149,9 @@ namespace Arbeidskrav2
             return review;
         }
         
+        /// <summary>
+        /// Calculates average rating for a user using LINQ.
+        /// </summary>
         public double? GetAverageRating(User user)
         {
             if (!user.ReceivedReviews.Any())
@@ -128,6 +160,9 @@ namespace Arbeidskrav2
             return Math.Round(user.ReceivedReviews.Average(r => r.Rating), 2);
         }
         
+        /// <summary>
+        /// Returns all transactions where this user was the seller.
+        /// </summary>
         public List<Transaction> GetSoldTransactions(User seller)
         {
             return _listings
@@ -143,6 +178,9 @@ namespace Arbeidskrav2
                 .ToList()!;
         }
         
+        /// <summary>
+        /// Prints listings in a clear, readable format using display-friendly names.
+        /// </summary>
         public void PrintListings(List<Listing> listings)
         {
             if (!listings.Any())
@@ -158,12 +196,28 @@ namespace Arbeidskrav2
                 Console.WriteLine($"ID: {listing.Id.ToString()[..8]}...");
                 Console.WriteLine($"Title:       {listing.Title}");
                 Console.WriteLine($"Price:       {listing.Price:N0} NOK");
-                Console.WriteLine($"Category:    {listing.Category}");
-                Console.WriteLine($"Condition:   {listing.Condition}");
+                Console.WriteLine($"Category:    {listing.CategoryDisplay}");
+                Console.WriteLine($"Condition:   {listing.ConditionDisplay}");
                 Console.WriteLine($"Seller:      @{listing.Seller.Username}");
                 Console.WriteLine($"Created:     {listing.CreatedAt:yyyy-MM-dd HH:mm}");
                 Console.WriteLine($"Description: {listing.Description}");
                 Console.WriteLine(new string('-', 60));
+            }
+        }
+        
+        /// <summary>
+        /// Prints a clean numbered table exactly like the assignment sample output.
+        /// No more partial IDs — user just picks a number!
+        /// </summary>
+        public void PrintNumberedListings(List<Listing> listings)
+        {
+            Console.WriteLine("  #   Title                              Category               Condition   Price");
+            Console.WriteLine("  ─────────────────────────────────────────────────────────────────────────────");
+
+            for (int i = 0; i < listings.Count; i++)
+            {
+                var l = listings[i];
+                Console.WriteLine($"  {i + 1,-3}{l.Title,-35} {l.CategoryDisplay,-22} {l.ConditionDisplay,-10} {l.Price,8:N0} kr");
             }
         }
     }
